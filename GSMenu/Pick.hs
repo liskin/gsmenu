@@ -167,14 +167,14 @@ elements = do
 elementMap :: TwoD a (TwoDElementMap a)
 elementMap = liftM2 zip (asks td_scaffold) elements
 
-diamondLayer :: (Enum b', Num b') => b' -> [(b', b')]
+diamondLayer :: (Enum b', Num b', Eq b') => b' -> [(b', b')]
 diamondLayer 0 = [(0,0)]
 diamondLayer n = concat [ zip [0..]      [n,n-1..1]
                         , zip [n,n-1..1] [0,-1..]
                         , zip [0,-1..]   [-n..(-1)]
                         , zip [-n..(-1)] [0,1..] ]
 
-diamond :: (Enum a, Num a) => [(a, a)]
+diamond :: (Enum a, Num a, Eq a) => [(a, a)]
 diamond = concatMap diamondLayer [0..]
 
 diamondRestrict :: Integer -> Integer -> Integer -> Integer -> [TwoDPosition]

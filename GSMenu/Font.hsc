@@ -38,6 +38,7 @@ import Foreign
 import Control.Applicative
 import Control.Monad
 import Control.Monad.Trans
+import Control.Exception
 import Data.Maybe
 
 #ifdef XFT
@@ -65,7 +66,7 @@ data GSMenuFont = Core FontStruct
 initColor :: Display -> String -> IO (Maybe Pixel)
 initColor dpy c = catch
   (Just . color_pixel . fst <$> allocNamedColor dpy colormap c)
-  (const $ return Nothing)
+  (\(SomeException _) -> return Nothing)
     where colormap = defaultColormap dpy (defaultScreen dpy)
 
 -- | Get the Pixel value for a named color: if an invalid name is
@@ -80,19 +81,19 @@ stringToPixel d s = fromMaybe fallBack <$> io getIt
 --  not valid the default font will be loaded and returned.
 initCoreFont :: MonadIO m => Display -> String -> m FontStruct
 initCoreFont dpy s =
-  io $ catch getIt fallBack
+  io $ catch getIt (\(SomeException _) -> fallBack)
       where getIt    = loadQueryFont dpy s
-            fallBack = const $ loadQueryFont dpy "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
+            fallBack = loadQueryFont dpy "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
 
 releaseCoreFont :: MonadIO m => Display -> FontStruct -> m ()
 releaseCoreFont dpy = io . freeFont dpy
 
 initUtf8Font :: MonadIO m => Display -> String -> m FontSet
 initUtf8Font dpy s = do
-  (_,_,fs) <- io $ catch getIt fallBack
+  (_,_,fs) <- io $ catch getIt (\(SomeException _) -> fallBack)
   return fs
       where getIt    = createFontSet dpy s
-            fallBack = const $ createFontSet dpy "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
+            fallBack = createFontSet dpy "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
 
 releaseUtf8Font :: MonadIO m => Display -> FontSet -> m ()
 releaseUtf8Font dpy = io . freeFontSet dpy

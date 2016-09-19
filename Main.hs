@@ -14,6 +14,7 @@
 module Main (main) where
 
 import Control.Applicative
+import Control.Exception (catch, SomeException(..))
 import Control.Monad
 import Control.Monad.Trans
 
@@ -56,7 +57,7 @@ defaultConfig = AppConfig {
 main :: IO ()
 main = do
   opts  <- getOpt RequireOrder options <$> getArgs
-  dstr  <- getEnv "DISPLAY" `catch` const (return "")
+  dstr  <- getEnv "DISPLAY" `catch` (\(SomeException _) -> return "")
   let cfg = defaultConfig { cfg_display = dstr }
   case opts of
     (opts', [], []) -> runWithCfg =<< foldl (>>=) (return cfg) opts'
@@ -89,7 +90,7 @@ runWithCfg cfg = do
 
 setupDisplay :: String -> IO Display
 setupDisplay dstr =
-  openDisplay dstr `Prelude.catch` \_ ->
+  openDisplay dstr `catch` \(SomeException _) ->
     error $ "Cannot open display \"" ++ dstr ++ "\"."
 
 findRectangle :: Display -> Window -> IO Rectangle
